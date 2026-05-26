@@ -26,15 +26,15 @@ print(f"MAE:  {mean_absolute_error(y_test_actual, y_pred):.2f}")
 print(f"RMSE: {root_mean_squared_error(y_test_actual, y_pred):.2f}")
 
 # actual vs predicted plot
-plt.scatter(y_test, y_pred, alpha=0.6)
-plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--')  # perfect prediction line
+plt.scatter(y_test_actual, y_pred, alpha=0.6)
+plt.plot([y_test_actual.min(), y_test_actual.max()], [y_test_actual.min(), y_test_actual.max()], 'r--')  # perfect prediction line
 plt.xlabel("Actual Price")
 plt.ylabel("Predicted Price")
 plt.title("Actual vs Predicted")
 plt.savefig("reports/actual_vs_predicted.png")
 
 # residuals plot
-residuals = y_test - y_pred
+residuals = y_test_actual - y_pred
 plt.figure()
 plt.scatter(y_pred, residuals, alpha=0.6)
 plt.axhline(0, color='r', linestyle='--')

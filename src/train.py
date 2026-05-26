@@ -3,6 +3,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import joblib
+import json
 
 auto = pd.read_csv("data/processed/auto_features.csv")
 
@@ -38,3 +39,6 @@ print('Intercept: {:.3f}'.format(model.intercept_))
 
 joblib.dump(model, "models/model.pkl")
 joblib.dump(scaler, "models/scaler.pkl")
+
+# save feature column order
+json.dump(list(X.columns), open("models/feature_columns.json", "w"))
