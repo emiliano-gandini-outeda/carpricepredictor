@@ -5,7 +5,7 @@ Predict car prices from the classic Automobile Data Set using linear regression.
 ## Stack
 
 - **src/**, Modular pipeline: ingestion, feature engineering, training, evaluation, prediction. Each step is a callable function, run them standalone or through `pipeline.py`.
-- **api/**, FastAPI with separate routers for setup, evaluation, prediction, status, and notebook serving. No background tasks, no surprises.
+- **api/**, FastAPI with separate routers for setup, evaluation, prediction, status, and notebook serving.
 - **frontend/**, Plain HTML/CSS/JS SPA. Dropped in behind FastAPI's static file mount, talks to the API through `fetch()`. Notebooks rendered inline with marked + highlight.js.
 - **Docker**, Slim Python image, uv for dependency management, compose volumes for data/models/reports.
 
@@ -39,4 +39,4 @@ Each module has a `run()` entry point. `pipeline.run_full_setup()` chains the wh
 
 ## Why No Framework
 
-The frontend is a single HTML file with vanilla JS. No build step, no npm, no framework churn. It does what it needs to do, forms, plots, notebook viewer, and stays out of the way.
+The frontend is a single HTML file with vanilla JS. No build step, no npm, no framework churn.
