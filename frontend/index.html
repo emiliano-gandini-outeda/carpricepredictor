@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Car Price Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <svg class="logo-icon" viewBox="0 0 40 40" width="32" height="32">
+        <rect x="2" y="12" width="36" height="18" rx="4" fill="currentColor" opacity="0.9"/>
+        <rect x="6" y="16" width="10" height="6" rx="2" fill="#0d1117"/>
+        <circle cx="12" cy="32" r="4" fill="currentColor"/>
+        <circle cx="28" cy="32" r="4" fill="currentColor"/>
+        <rect x="18" y="16" width="10" height="6" rx="2" fill="#0d1117" opacity="0.6"/>
+      </svg>
+      <span class="logo-text">CarPrice<span class="logo-accent">Pro</span></span>
+    </div>
+    <div class="sidebar-nav">
+      <button class="nav-btn active" data-tab="dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-btn" data-tab="setup">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        Setup
+      </button>
+      <button class="nav-btn" data-tab="predict">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+        Predict
+      </button>
+      <button class="nav-btn" data-tab="evaluate">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        Evaluate
+      </button>
+      <button class="nav-btn" data-tab="notebooks">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Notebooks
+      </button>
+    </div>
+    <div class="sidebar-footer" id="status-badge">
+      <div class="status-dot unknown"></div>
+      <span>Checking...</span>
+    </div>
+  </nav>
+
+  <main id="main-content">
+    <div id="tab-dashboard" class="tab-content active">
+      <h1>Dashboard</h1>
+      <div class="dashboard-grid" id="dashboard-grid">
+        <div class="card card-status">
+          <h3>Model Status</h3>
+          <div class="status-row"><span class="stat-label">Trained</span><span class="stat-value" id="ds-model-trained">—</span></div>
+          <div class="status-row"><span class="stat-label">Data Prepared</span><span class="stat-value" id="ds-data-ready">—</span></div>
+          <div class="status-row"><span class="stat-label">Features</span><span class="stat-value" id="ds-features">—</span></div>
+        </div>
+        <div class="card card-quick">
+          <h3>Quick Actions</h3>
+          <button class="btn btn-primary" onclick="switchTab('setup')">Run Pipeline</button>
+          <button class="btn btn-secondary" onclick="switchTab('predict')">Predict Price</button>
+          <button class="btn btn-secondary" onclick="switchTab('evaluate')">View Reports</button>
+        </div>
+        <div class="card card-pipeline">
+          <h3>Pipeline</h3>
+          <div class="pipeline-steps">
+            <div class="step" id="step-data"><span class="step-num">1</span> Data Ingestion</div>
+            <div class="step" id="step-features"><span class="step-num">2</span> Feature Engineering</div>
+            <div class="step" id="step-train"><span class="step-num">3</span> Training</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-setup" class="tab-content">
+      <h1>Setup Pipeline</h1>
+      <p class="subtitle">Download data, engineer features, and train the model.</p>
+      <button class="btn btn-primary btn-lg" id="btn-run-setup" onclick="runSetup()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Run Full Pipeline
+      </button>
+      <div id="setup-output" class="output-box"></div>
+    </div>
+
+    <div id="tab-predict" class="tab-content">
+      <h1>Predict Price</h1>
+      <p class="subtitle">Enter car specifications to get a predicted price.</p>
+      <form id="predict-form" onsubmit="return handlePredict(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="p-make">Make</label>
+            <select id="p-make" required></select>
+          </div>
+          <div class="form-group">
+            <label for="p-body-style">Body Style</label>
+            <select id="p-body-style" required></select>
+          </div>
+          <div class="form-group">
+            <label for="p-engine-type">Engine Type</label>
+            <select id="p-engine-type" required></select>
+          </div>
+          <div class="form-group">
+            <label for="p-fuel-system">Fuel System</label>
+            <select id="p-fuel-system" required></select>
+          </div>
+          <div class="form-group">
+            <label for="p-cylinders">Cylinders</label>
+            <select id="p-cylinders" required></select>
+          </div>
+          <div class="form-group">
+            <label for="p-drive">Drive Wheels</label>
+            <select id="p-drive" required></select>
+          </div>
+          <div class="form-group">
+            <label for="p-aspiration">Turbo</label>
+            <select id="p-aspiration" required>
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="p-engine-location">Rear Engine</label>
+            <select id="p-engine-location" required>
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="p-curb-weight">Curb Weight (lbs)</label>
+            <input type="number" id="p-curb-weight" value="2500" step="10" required>
+          </div>
+          <div class="form-group">
+            <label for="p-engine-size">Engine Size (cu-in)</label>
+            <input type="number" id="p-engine-size" value="130" step="1" required>
+          </div>
+          <div class="form-group">
+            <label for="p-horsepower">Horsepower</label>
+            <input type="number" id="p-horsepower" value="110" step="5" required>
+          </div>
+          <div class="form-group">
+            <label for="p-bore">Bore (mm)</label>
+            <input type="number" id="p-bore" value="3.5" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="p-stroke">Stroke (mm)</label>
+            <input type="number" id="p-stroke" value="3.0" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="p-height">Height (in)</label>
+            <input type="number" id="p-height" value="55" step="0.5" required>
+          </div>
+          <div class="form-group">
+            <label for="p-symboling">Symboling (-2 to 3)</label>
+            <input type="number" id="p-symboling" value="1" min="-2" max="3" step="1" required>
+          </div>
+          <div class="form-group">
+            <label for="p-peak-rpm">Peak RPM</label>
+            <input type="number" id="p-peak-rpm" value="5500" step="100" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg" id="btn-predict">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+          Predict Price
+        </button>
+      </form>
+      <div id="predict-result" class="result-card hidden">
+        <h2>Estimated Price</h2>
+        <div id="predict-price" class="price-display">$0</div>
+      </div>
+      <div id="predict-error" class="output-box error hidden"></div>
+    </div>
+
+    <div id="tab-evaluate" class="tab-content">
+      <h1>Evaluation</h1>
+      <p class="subtitle">Model performance metrics and diagnostic plots.</p>
+      <button class="btn btn-primary btn-lg" onclick="runEvaluate()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        Run Evaluation
+      </button>
+      <div id="eval-metrics" class="metrics-grid hidden"></div>
+      <div id="eval-plots" class="plots-grid hidden"></div>
+      <div id="eval-error" class="output-box error hidden"></div>
+    </div>
+
+    <div id="tab-notebooks" class="tab-content">
+      <h1>Notebooks</h1>
+      <p class="subtitle">Exploratory data analysis and feature engineering notebooks.</p>
+      <div id="notebook-list" class="notebook-list"></div>
+      <div id="notebook-viewer" class="notebook-viewer hidden"></div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
