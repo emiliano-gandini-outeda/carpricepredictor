@@ -1,5 +1,5 @@
 /* ─── State ─── */
-let state = { modelTrained: false, featureSchema: [] };
+let state = { modelTrained: false, featureSchema: [], notebookCache: {} };
 
 /* ─── Navigation ─── */
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -11,7 +11,6 @@ function switchTab(tab) {
   document.querySelector(`.nav-btn[data-tab="${tab}"]`).classList.add('active');
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
-  if (tab === 'notebooks') loadNotebookList();
 }
 
 /* ─── Status ─── */
@@ -115,8 +114,8 @@ async function handlePredict(e) {
     body_style: document.getElementById('p-body-style').value,
     engine_type: document.getElementById('p-engine-type').value,
     fuel_system: document.getElementById('p-fuel-system').value,
-    num_of_cylinders: document.getElementById('p-cylinders').value,
-    drive_wheels: document.getElementById('p-drive').value,
+    num_of_cylinders: document.getElementById('p-num-of-cylinders').value,
+    drive_wheels: document.getElementById('p-drive-wheels').value,
     aspiration_turbo: parseInt(document.getElementById('p-aspiration').value),
     engine_location_rear: parseInt(document.getElementById('p-engine-location').value),
     curb_weight: parseFloat(document.getElementById('p-curb-weight').value),
@@ -201,77 +200,107 @@ async function runEvaluate() {
 }
 
 /* ─── Notebooks ─── */
-async function loadNotebookList() {
-  const listEl = document.getElementById('notebook-list');
-  const viewerEl = document.getElementById('notebook-viewer');
-  viewerEl.classList.add('hidden');
+document.getElementById('btn-notebooks-toggle').addEventListener('click', function(e) {
+  const group = this.closest('.nav-group');
+  const isOpening = !group.classList.contains('open');
 
+  document.querySelectorAll('.nav-group.open').forEach(g => {
+    if (g !== group) g.classList.remove('open');
+  });
+
+  group.classList.toggle('open');
+
+  if (isOpening) {
+    switchTab('notebooks');
+  } else {
+    document.querySelectorAll('.nav-subitem').forEach(s => s.classList.remove('active'));
+    document.getElementById('notebook-viewer').innerHTML = '';
+  }
+});
+
+async function preloadNotebooks() {
   try {
     const res = await fetch('/api/notebooks');
     const data = await res.json();
-    listEl.innerHTML = data.notebooks.map(nb => {
-      const desc = { 'features.ipynb': 'Feature engineering & selection', 'initial_eda.ipynb': 'Exploratory data analysis', 'training.ipynb': 'Model training & evaluation' }[nb] || '';
-      return `<div class="nb-card" onclick="openNotebook('${nb}')">
-        <div class="nb-name">${nb}</div>
-        <div class="nb-desc">${desc}</div>
-      </div>`;
-    }).join('');
+    const menu = document.getElementById('notebook-submenu');
+    menu.innerHTML = data.notebooks.map(nb =>
+      `<button class="nav-subitem" onclick="openNotebook('${nb}')">${nb.replace('.ipynb', '')}</button>`
+    ).join('');
+    data.notebooks.forEach(async (name) => {
+      const r = await fetch(`/api/notebooks/${name}`);
+      state.notebookCache[name] = await r.json();
+    });
   } catch (e) {
-    listEl.innerHTML = '<p style="color:var(--text-secondary)">Failed to load notebooks.</p>';
+    document.getElementById('notebook-submenu').innerHTML =
+      '<span style="color:var(--error);font-size:11px">Failed to load</span>';
   }
 }
 
-async function openNotebook(name) {
-  const viewerEl = document.getElementById('notebook-viewer');
+function renderNotebookCells(nb, container) {
+  for (const cell of nb.cells) {
+    if (cell.cell_type === 'markdown') {
+      const src = cell.source.join('');
+      const html = marked.parse(src);
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      while (tmp.firstChild) container.appendChild(tmp.firstChild);
+    } else if (cell.cell_type === 'code') {
+      const src = cell.source.join('');
 
-  try {
-    const res = await fetch(`/api/notebooks/${name}`);
-    const nb = await res.json();
-    viewerEl.innerHTML = '<div class="cell-marker">' + name + '</div>';
-    viewerEl.classList.remove('hidden');
+      const cellGroup = document.createElement('div');
+      cellGroup.className = 'code-cell-group';
 
-    for (const cell of nb.cells) {
-      const div = document.createElement('div');
-      div.className = 'cell';
+      const codeEl = document.createElement('pre');
+      codeEl.className = 'code-block';
+      const codeTag = document.createElement('code');
+      codeTag.className = 'language-python';
+      codeTag.textContent = src;
+      codeEl.appendChild(codeTag);
+      cellGroup.appendChild(codeEl);
 
-      if (cell.cell_type === 'markdown') {
-        const src = cell.source.join('');
-        div.innerHTML = `<div class="cell-marker">md</div><div class="cell-md">${marked.parse(src)}</div>`;
-      } else if (cell.cell_type === 'code') {
-        const src = cell.source.join('');
-        div.innerHTML = `<div class="cell-marker">code</div><pre class="cell-code">${escHtml(src)}</pre>`;
-
-        for (const output of cell.outputs || []) {
-          if (output.text) {
-            const outDiv = document.createElement('div');
-            outDiv.className = 'cell-output';
-            outDiv.textContent = (output.text.join ? output.text.join('') : output.text).trim();
-            div.appendChild(outDiv);
-          }
-          if (output.data && output.data['text/plain']) {
-            const outDiv = document.createElement('div');
-            outDiv.className = 'cell-output';
-            outDiv.textContent = output.data['text/plain'].join ? output.data['text/plain'].join('') : output.data['text/plain'];
-            div.appendChild(outDiv);
-          }
+      for (const output of cell.outputs || []) {
+        let text = null;
+        if (output.text) {
+          text = (output.text.join ? output.text.join('') : output.text).trim();
+        } else if (output.data && output.data['text/plain']) {
+          text = output.data['text/plain'].join ? output.data['text/plain'].join('') : output.data['text/plain'];
+        }
+        if (text) {
+          const pre = document.createElement('pre');
+          pre.className = 'cell-output';
+          pre.textContent = text;
+          cellGroup.appendChild(pre);
         }
       }
 
-      viewerEl.appendChild(div);
+      container.appendChild(cellGroup);
     }
-
-    viewerEl.scrollTop = 0;
-  } catch (e) {
-    viewerEl.innerHTML = '<p style="color:var(--error)">Failed to load notebook.</p>';
-    viewerEl.classList.remove('hidden');
   }
+
+  container.querySelectorAll('pre.code-block code').forEach(hljs.highlightElement);
 }
 
-function escHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+function openNotebook(name) {
+  document.querySelectorAll('.nav-subitem').forEach(s => s.classList.remove('active'));
+  const btn = document.querySelector(`.nav-subitem[onclick*="'${name}'"]`);
+  if (btn) btn.classList.add('active');
+
+  const viewerEl = document.getElementById('notebook-viewer');
+  viewerEl.innerHTML = '';
+
+  const nb = state.notebookCache[name];
+  if (!nb) {
+    viewerEl.innerHTML = '<p style="color:var(--error)">Notebook not loaded yet.</p>';
+    return;
+  }
+
+  const title = document.createElement('h1');
+  title.textContent = name.replace('.ipynb', '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  viewerEl.appendChild(title);
+
+  renderNotebookCells(nb, viewerEl);
 }
 
 /* ─── Init ─── */
 fetchStatus();
+preloadNotebooks();
