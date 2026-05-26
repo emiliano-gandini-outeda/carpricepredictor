@@ -5,6 +5,8 @@ from api.schemas import StatusResponse
 
 router = APIRouter()
 
+DERIVED_COLS = {"horsepower_per_kg", "engine_per_kg", "mpg_avg", "footprint"}
+
 
 def _build_feature_schema() -> list[dict]:
     cols_path = Path("models/feature_columns.json")
@@ -22,6 +24,7 @@ def _build_feature_schema() -> list[dict]:
         "fuel-system": [],
     }
     numeric = []
+    derived = []
 
     for col in cols:
         matched = False
@@ -31,7 +34,11 @@ def _build_feature_schema() -> list[dict]:
                 groups[group].append(col)
                 matched = True
                 break
-        if not matched:
+        if matched:
+            continue
+        if col in DERIVED_COLS:
+            derived.append(col)
+        else:
             numeric.append(col)
 
     schema = []
@@ -43,7 +50,7 @@ def _build_feature_schema() -> list[dict]:
             "columns": members,
         })
     schema.append({
-        "name": "numeric_features",
+        "name": "numeric",
         "type": "numeric",
         "values": numeric,
         "columns": numeric,
@@ -51,8 +58,8 @@ def _build_feature_schema() -> list[dict]:
     schema.append({
         "name": "derived",
         "type": "derived",
-        "values": ["horsepower_per_kg", "engine_per_kg", "mpg_avg", "footprint"],
-        "columns": ["horsepower_per_kg", "engine_per_kg", "mpg_avg", "footprint"],
+        "values": derived,
+        "columns": derived,
     })
     return schema
 
@@ -63,10 +70,17 @@ def status():
     data_exists = Path("data/processed/auto_features.csv").exists()
     feature_schema = _build_feature_schema() if model_exists else None
 
+    flat_features = []
+    total = 0
+    if feature_schema:
+        for entry in feature_schema:
+            flat_features.extend(entry["columns"])
+            total += len(entry["columns"])
+
     return StatusResponse(
         model_trained=model_exists,
         data_exists=data_exists,
-        feature_count=len(feature_schema[0]["columns"]) + len(feature_schema[1]["columns"]) + len(feature_schema[2]["columns"]) if feature_schema else None,
-        features=[col for entry in feature_schema for col in entry["columns"]] if feature_schema else None,
+        feature_count=total if feature_schema else None,
+        features=flat_features if feature_schema else None,
         feature_schema=feature_schema if feature_schema else None,
     )
