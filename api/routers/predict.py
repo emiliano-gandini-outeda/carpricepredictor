@@ -75,10 +75,8 @@ def predict(req: PredictRequest):
     # Derived features
     features['horsepower_per_kg'] = req.horsepower / req.curb_weight
     features['engine_per_kg'] = req.engine_size / req.curb_weight
-    if "mpg_avg" in feature_cols:
-        features['mpg_avg'] = 27.5
-    if "footprint" in feature_cols:
-        features['footprint'] = 170.0 * 65.0
+    features['mpg_avg'] = req.mpg_avg
+    features['footprint'] = req.footprint
 
     try:
         price = run_prediction(features)

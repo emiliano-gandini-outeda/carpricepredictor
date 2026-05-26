@@ -41,8 +41,7 @@ def run(features: dict = None,
 
     sample = pd.DataFrame([features])
 
-    log_cols = ['curb-weight', 'engine-size', 'horsepower', 'horsepower_per_kg',
-                'engine_per_kg', 'footprint', 'mpg_avg']
+    log_cols = ['engine-size', 'horsepower', 'horsepower_per_kg', 'engine_per_kg']
     for col in log_cols:
         if col in sample.columns:
             sample[col] = np.log1p(sample[col])

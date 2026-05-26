@@ -13,11 +13,13 @@ class PredictRequest(BaseModel):
     make: str = "honda"
     aspiration_turbo: int = 0
     body_style: str = "sedan"
-    drive_wheels: str = "rwd"
+    drive_wheels: str = "fwd"
     engine_location_rear: int = 0
     engine_type: str = "ohc"
     num_of_cylinders: str = "four"
     fuel_system: str = "mpfi"
+    mpg_avg: float = 27.5
+    footprint: float = 11050.0
 
 
 class PredictResponse(BaseModel):
