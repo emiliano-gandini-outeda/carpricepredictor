@@ -1,2 +1,3 @@
 data/
 *.pkl
+/src/__pycache__
