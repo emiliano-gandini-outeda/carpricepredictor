@@ -40,3 +40,14 @@ Each module has a `run()` entry point. `pipeline.run_full_setup()` chains the wh
 ## Why No Framework
 
 The frontend is a single HTML file with vanilla JS. No build step, no npm, no framework churn.
+
+## Model Accuracy
+
+Linear regression on 201 samples, 47 features. The model skews conservative, it's decent on mass-market cars, weaker on luxury outliers.
+
+| Segment | Avg Error | Notes |
+|---------|----------:|-------|
+| Economy hatchbacks (20 cars) | 19.4% | Sweet spot. Cheap, common cars. |
+| Mixed segment (20 cars) | 27.9% | Undershoots Jaguar, Mercedes, BMW by 40-60%. |
+
+The economy set includes Civics, Corollas, Golfs, the kind of cars that populate the training data. The model systematically underprices luxury trims because there aren't enough of them in 201 rows to learn the premium.
